@@ -5,27 +5,63 @@ import csv
 def getCatastoData():
 
     catastoUrlBase = "http://cds.library.brown.edu/projects/catasto/newsearch/tabdel.php?dbname=Catasto&rawquery="
-    sqlQuery = "SELECT location, trade FROM catasto ORDER BY trade LIMIT 100000"
+    sqlQuery = "SELECT location, trade, bocche, taxable FROM catasto ORDER BY trade LIMIT 100000"
 
     requestUrl = str(catastoUrlBase) + urllib.parse.quote(str(sqlQuery))
     response = urllib.request.urlopen(requestUrl)
     data = csv.reader(response.read().decode('utf: "8').splitlines(), delimiter='\t')
 
     next(data)
-    sums = {}
-    neighbourhoodList = [11, 12, 13, 14, 21, 22, 23, 24, 31, 32, 33, 34, 41, 42, 43, 44]
+    tradesmen = {}
+    tradeWealth = {}
+    population = {}
+    neighbourhoodList = getNeighbourhoods().keys()
     for neighbourhood in neighbourhoodList:
-        sums[neighbourhood] = {}
+        tradesmen[neighbourhood] = {}
+        tradeWealth[neighbourhood] = {}
+        population[neighbourhood] = 0
         for trade in range(0,100):
-            sums[neighbourhood][trade] = 0
+            tradesmen[neighbourhood][trade] = 0
+            tradeWealth[neighbourhood][trade] = 0
 
     for line in data:
         neighbourhood = int(line[0])
         trade = int(line[1]) % 100
-        if(neighbourhood in sums):
-            sums[neighbourhood][trade] += 1
+        housePop = int(line[2])
+        wealth = int(line[3])
+        if(neighbourhood in neighbourhoodList):
+            tradesmen[neighbourhood][trade] += 1
+            population[neighbourhood] += housePop
+            tradeWealth[neighbourhood][trade] += wealth
 
-    return sums
+    return tradesmen, population, tradeWealth
+
+
+def neighbourhoodNameToIndex(neighbourhood):
+    if type(neighbourhood) is str:
+        neighbourhood = getNeighbourhoods().index(neighbourhood)
+    return neighbourhood
+
+def getNeighbourhoods():
+    neighbourhoodList = {
+      11: "Scala",
+      12: "Nicchio",
+      13: "Ferza",
+      14: "Drago",
+      21: "Carro",
+      22: "Bue",
+      23: "Leon Nero",
+      24: "Ruote",
+      31: "Vipera",
+      32: "Unicorno",
+      33: "Leon Rosso",
+      34: "Leon Bianco",
+      41: "Leon D'Oro",
+      42: "Drago",
+      43: "Chiavi",
+      44: "Vaio"
+    }
+    return neighbourhoodList
 
 def getTradeName(tradeNumber):
     tradeNames = {  0: "No Trade",
